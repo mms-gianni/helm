@@ -47,7 +47,7 @@ func (g *GitGetter) get(href string) (*bytes.Buffer, error) {
 	// Parse the Git URL
 	// Format: git://github.com/user/repo@ref?path=charts/mychart
 	// Or: git+https://github.com/user/repo@ref?path=charts/mychart
-	
+
 	repoURL, ref, chartPath, err := parseGitURL(href)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse git URL: %w", err)
@@ -91,18 +91,18 @@ func (g *GitGetter) get(href string) (*bytes.Buffer, error) {
 func (g *GitGetter) cloneRepo(repoURL, ref, destDir string) error {
 	// Use shallow clone for better performance
 	args := []string{"clone", "--depth", "1"}
-	
+
 	// If a specific ref is provided, clone that branch/tag
 	if ref != "" && ref != "HEAD" && ref != "master" && ref != "main" {
 		args = append(args, "--branch", ref)
 	}
-	
+
 	args = append(args, repoURL, destDir)
 
 	cmd := exec.Command("git", args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
-	
+
 	if err := cmd.Run(); err != nil {
 		// If shallow clone with branch failed, try full clone and checkout
 		if ref != "" && ref != "HEAD" && ref != "master" && ref != "main" {
@@ -158,10 +158,12 @@ func (g *GitGetter) packageChart(chartDir string) (*bytes.Buffer, error) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cmd := exec.Command("helm", "package", chartDir, "-d", tmpDir)
+	// Use --dependency-update to automatically fetch any dependencies the chart needs
+	// This handles charts that have their own dependencies
+	cmd := exec.Command("helm", "package", chartDir, "-d", tmpDir, "--dependency-update")
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
-	
+
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("helm package failed: %s", stderr.String())
 	}
@@ -200,7 +202,7 @@ func parseGitURL(href string) (repoURL, ref, chartPath string, err error) {
 	// Extract the ref from the URL fragment or path
 	ref = "HEAD" // default ref
 	repoPath := u.Path
-	
+
 	// Check if ref is specified with @ symbol
 	if strings.Contains(u.Path, "@") {
 		parts := strings.SplitN(u.Path, "@", 2)

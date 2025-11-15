@@ -33,12 +33,12 @@ func TestNewGitGetter(t *testing.T) {
 
 func TestParseGitURL(t *testing.T) {
 	tests := []struct {
-		name          string
-		url           string
-		expectRepo    string
-		expectRef     string
-		expectPath    string
-		expectError   bool
+		name        string
+		url         string
+		expectRepo  string
+		expectRef   string
+		expectPath  string
+		expectError bool
 	}{
 		{
 			name:        "git:// with ref and path",
@@ -93,27 +93,27 @@ func TestParseGitURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo, ref, path, err := parseGitURL(tt.url)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error but got none")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
 			}
-			
+
 			if repo != tt.expectRepo {
 				t.Errorf("expected repo %q, got %q", tt.expectRepo, repo)
 			}
-			
+
 			if ref != tt.expectRef {
 				t.Errorf("expected ref %q, got %q", tt.expectRef, ref)
 			}
-			
+
 			if path != tt.expectPath {
 				t.Errorf("expected path %q, got %q", tt.expectPath, path)
 			}
@@ -124,9 +124,9 @@ func TestParseGitURL(t *testing.T) {
 func TestGitGetterSchemes(t *testing.T) {
 	// Test that Git getter is registered for the correct schemes
 	schemes := []string{"git", "git+https", "git+http", "git+ssh"}
-	
+
 	providers := Getters()
-	
+
 	for _, scheme := range schemes {
 		found := false
 		for _, p := range providers {
