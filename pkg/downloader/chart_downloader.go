@@ -227,13 +227,10 @@ func (c *ChartDownloader) DownloadToCache(ref, version string) (string, *provena
 	// Check the cache for the file
 	digest, err := hex.DecodeString(digestString)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("unable to decode digest: %w", err)
 	}
 	var digest32 [32]byte
 	copy(digest32[:], digest)
-	if err != nil {
-		return "", nil, fmt.Errorf("unable to decode digest: %w", err)
-	}
 
 	var pth string
 	// only fetch from the cache if we have a digest
@@ -365,6 +362,14 @@ func (c *ChartDownloader) ResolveChartVersion(ref, version string) (string, *url
 
 		digest, OCIref, err := c.RegistryClient.ValidateReference(ref, version, u)
 		return digest, OCIref, err
+	}
+
+	// Handle Git repositories
+	if isGitURL(u.Scheme) {
+		// Git URLs are handled directly by the Git getter
+		// No need to resolve version here as it's embedded in the URL
+		c.Options = append(c.Options, getter.WithURL(ref))
+		return "", u, nil
 	}
 
 	rf, err := loadRepoConfig(c.RepositoryConfig)
@@ -580,4 +585,9 @@ func loadRepoConfig(file string) (*repo.File, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+// isGitURL checks if the scheme is a Git URL scheme
+func isGitURL(scheme string) bool {
+	return scheme == "git" || scheme == "git+https" || scheme == "git+http" || scheme == "git+ssh"
 }
