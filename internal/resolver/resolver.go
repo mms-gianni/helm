@@ -107,6 +107,16 @@ func (r *Resolver) Resolve(reqs []*chart.Dependency, repoNames map[string]string
 			continue
 		}
 
+		// Handle Git repositories - they don't use index files
+		if isGitRepository(d.Repository) {
+			locked[i] = &chart.Dependency{
+				Name:       d.Name,
+				Repository: d.Repository,
+				Version:    d.Version,
+			}
+			continue
+		}
+
 		repoName := repoNames[d.Name]
 		// if the repository was not defined, but the dependency defines a repository url, bypass the cache
 		if repoName == "" && d.Repository != "" {
@@ -260,4 +270,12 @@ func GetLocalPath(repo, chartpath string) (string, error) {
 	}
 
 	return depPath, nil
+}
+
+// isGitRepository checks if a repository URL is a Git repository
+func isGitRepository(repo string) bool {
+	return strings.HasPrefix(repo, "git://") ||
+		strings.HasPrefix(repo, "git+https://") ||
+		strings.HasPrefix(repo, "git+http://") ||
+		strings.HasPrefix(repo, "git+ssh://")
 }
