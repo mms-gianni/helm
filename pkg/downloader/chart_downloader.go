@@ -378,8 +378,11 @@ func (c *ChartDownloader) ResolveChartVersion(ref, version string) (string, *url
 	// Handle Git repositories
 	if isGitURL(u.Scheme) {
 		// Git URLs are handled directly by the Git getter
-		// No need to resolve version here as it's embedded in the URL
+		// Pass the version to the getter so it can use it as the Git ref
 		c.Options = append(c.Options, getter.WithURL(ref))
+		if version != "" {
+			c.Options = append(c.Options, getter.WithTagName(version))
+		}
 		return "", u, nil
 	}
 

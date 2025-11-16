@@ -53,6 +53,12 @@ func (g *GitGetter) get(href string) (*bytes.Buffer, error) {
 		return nil, fmt.Errorf("failed to parse git URL: %w", err)
 	}
 
+	// Use version from options if provided (takes precedence over URL ref)
+	// This allows the dependency version field to specify the Git ref
+	if g.opts.version != "" && g.opts.version != "*" {
+		ref = g.opts.version
+	}
+
 	// Create a temporary directory for cloning
 	tmpDir, err := os.MkdirTemp("", "helm-git-")
 	if err != nil {

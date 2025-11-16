@@ -59,11 +59,6 @@ func (r *Resolver) Resolve(reqs []*chart.Dependency, repoNames map[string]string
 	locked := make([]*chart.Dependency, len(reqs))
 	missing := []string{}
 	for i, d := range reqs {
-		constraint, err := semver.NewConstraint(d.Version)
-		if err != nil {
-			return nil, fmt.Errorf("dependency %q has an invalid version/constraint format: %w", d.Name, err)
-		}
-
 		if d.Repository == "" {
 			// Local chart subfolder
 			if _, err := GetLocalPath(filepath.Join("charts", d.Name), r.chartpath); err != nil {
@@ -77,6 +72,24 @@ func (r *Resolver) Resolve(reqs []*chart.Dependency, repoNames map[string]string
 			}
 			continue
 		}
+
+		// Handle Git repositories - they don't use semver constraints or index files
+		// The version field is used as-is as the Git ref (branch/tag/commit)
+		if isGitRepository(d.Repository) {
+			locked[i] = &chart.Dependency{
+				Name:       d.Name,
+				Repository: d.Repository,
+				Version:    d.Version,
+			}
+			continue
+		}
+
+		// For non-Git repositories, parse version as semver constraint
+		constraint, err := semver.NewConstraint(d.Version)
+		if err != nil {
+			return nil, fmt.Errorf("dependency %q has an invalid version/constraint format: %w", d.Name, err)
+		}
+
 		if strings.HasPrefix(d.Repository, "file://") {
 			chartpath, err := GetLocalPath(d.Repository, r.chartpath)
 			if err != nil {
