@@ -613,10 +613,10 @@ func extractChartMetadata(data []byte) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	
+
 	if ch.Metadata == nil {
 		return "", "", fmt.Errorf("chart metadata is nil")
 	}
-	
+
 	return ch.Metadata.Name, ch.Metadata.Version, nil
 }
